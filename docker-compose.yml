@@ -29,3 +29,12 @@ services:
       - "5050:5000"
     volumes:
       - ./ai-service:/app
+    depends_on:
+      - mcp-server
+
+  mcp-server:
+    build: ./mcp-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mcp-server:/app
