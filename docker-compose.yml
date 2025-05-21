@@ -23,6 +23,19 @@ services:
       - NODE_ENV=development
     command: npm start
 
+  mcp-server:
+    build: ./mcp-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mcp-server:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+      start_period: 5s
+
   ai-service:
     build: ./ai-service
     ports:
@@ -30,11 +43,5 @@ services:
     volumes:
       - ./ai-service:/app
     depends_on:
-      - mcp-server
-
-  mcp-server:
-    build: ./mcp-server
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./mcp-server:/app
+      mcp-server:
+        condition: service_healthy
