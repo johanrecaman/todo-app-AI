@@ -1,0 +1,30 @@
+Extracts structured information about appointments and commitments from natural language text.
+This tool should be called whenever the user mentions any type of scheduled event,
+appointment, or commitment in their message. It parses the text to identify and
+extract key details about the event.
+
+The tool recognizes:
+  - Event types (e.g., medical appointment, meeting, social event)
+  - Dates and times (including relative dates like "tomorrow" or "next week")
+  - Locations (when specified)
+  - Participants (when mentioned)
+  - Additional notes about the event
+Args:
+  input (str): The natural language text containing the appointment/commitment information.
+  Example: "Tenho consulta médica na próxima sexta às 14h no Hospital XYZ"
+  Returns:
+    dict: A structured representation of the parsed event with these potential fields:
+      - event_type (str): The type of event/appointment
+      - date (str): ISO format date (YYYY-MM-DD)
+      - time (str): Time in 24h format (HH:MM)
+      - location (str): Optional location information
+      - participants (list[str]): Optional list of people involved
+      - notes (str): Additional notes about the event
+      - is_recurring (bool): Whether the event repeats
+Example Return:
+  {
+    "event_type": "medical appointment",
+    "date": "2023-11-10",
+    "time": "14:00",
+    "location": "Hospital XYZ",
+  }
