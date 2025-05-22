@@ -1,17 +1,27 @@
 from typing import Annotated
 from typing_extensions import TypedDict
+
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
+
 from langchain_core.tools import tool
 from langchain.chat_models import init_chat_model
+
 from dotenv import load_dotenv
 import requests
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from langchain_core.messages import HumanMessage
+from pydantic import BaseModel
+
 
 load_dotenv()
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
+    parser_data: dict
 
 @tool
 def call_parser(input: str) -> dict:
@@ -20,21 +30,15 @@ def call_parser(input: str) -> dict:
     - Consultas, reuniões, eventos
     - Datas/horários (hoje, amanhã, dias da semana)
     - Locais específicos (opcional)
-    Retorna:
-        {
-            "evento": str,         # Ex: "consulta médica"
-            "data": str,           # Formato "YYYY-MM-DD"
-            "hora": str,           # Formato "HH:MM"
-            "local": str,          # Opcional
-            "recorrente": bool    # Ex: True para "toda sexta"
-        }
     """
-    response = requests.post("http://mcp-server:8080/mcp", json={"text": input})
-    return response.json()
+    response = requests.post(
+        "http://mcp-server:8080/mcp",
+        json={"text": input}
+    )
+    return {"messages": response.json()}
 
 llm = init_chat_model("google_genai:gemini-2.0-flash")
-tool_instance = call_parser
-tools = [tool_instance]
+tools = [call_parser]
 llm_with_tools = llm.bind_tools(tools)
 
 graph_builder = StateGraph(State)
@@ -55,14 +59,20 @@ graph_builder.add_edge(START, "chatbot")
 
 graph = graph_builder.compile()
 
-if __name__ == "__main__":
-    test_cases = [
-        "Tenho consulta médica amanhã às 14h",
-        "Reunião com o time toda segunda-feira às 10h",
-        "Vou no dentista dia 15/07 às 16:30",
-        "Encontro com a Ana no shopping às 19h"
-    ]
-    for input_text in test_cases:
-        print(f"\nInput: '{input_text}'")
-        result = call_parser.invoke({"input": input_text})
-        print("Resultado:", result)
+app = FastAPI()
+
+class ChatInput(BaseModel):
+    message: str
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post("/chat")
+async def chat(data: ChatInput):
+    result = graph.invoke({"messages": [HumanMessage(content=data.message)]})
+    return result["messages"][-1]
+

@@ -1,6 +1,8 @@
-flask
+fastapi
+uvicorn
 langgraph
 langchain
 langchain-google-genai
 python-dotenv
 typing-extensions
+pydantic
