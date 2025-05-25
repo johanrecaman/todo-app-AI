@@ -1,6 +1,5 @@
-fastapi
-uvicorn
 langgraph
+langgraph[cli]
 langchain
 langchain-google-genai
 python-dotenv
