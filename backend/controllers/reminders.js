@@ -3,13 +3,13 @@ import openDb from '../db.js';
 const db = await openDb();
 
 export const getReminders = async (_, res) =>{
-  sql = 'SELECT * FROM reminders ORDER BY created_at DESC';
+  const sql = 'SELECT * FROM reminders ORDER BY created_at DESC';
   const reminders = await db.all(sql);
   res.json(reminders);
 }
 
 export const getReminder = async (req, res) =>{
-  sql = 'SELECT * FROM reminders WHERE id = ?';
+  const sql = 'SELECT * FROM reminders WHERE id = ?';
   const reminder = await db.get(sql, req.params.id);
   res.json(reminder);
 }
@@ -19,6 +19,7 @@ export const createReminder = async (req, res) =>{
   const sql = 'INSERT INTO reminders (title, location, date, time) VALUES (?, ?, ?, ?)';
   const params = [title, location, date, time];
   await db.run(sql, params);
+  res.status(201).json({ message: 'Reminder created successfully' });
 }
 
 export const updateReminder = async (req, res) =>{

@@ -11,7 +11,6 @@ services:
     command: npm run dev -- --host
     depends_on:
       - backend
-      - ai-service
 
   backend:
     build: ./backend
@@ -23,6 +22,7 @@ services:
     environment:
       - NODE_ENV=development
     command: npm start
+
 
   #ai-service:
   #  build: ./ai-service
