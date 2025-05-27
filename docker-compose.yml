@@ -24,10 +24,9 @@ services:
     command: npm start
 
 
-  #ai-service:
-  #  build: ./ai-service
-  #  ports:
-  #    - "5050:5050"
-  #  volumes:
-  #    - ./ai-service:/app
-  #  command: /bin/sh -c "langgraph dev | grep -v '\\[info\\]'"
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./ai-service:/app

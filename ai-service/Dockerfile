@@ -9,4 +9,4 @@ RUN pip install -U "langgraph-cli[inmem]"
 
 COPY . .
 
-CMD ["langgraph", "dev"]
+CMD ["python", "client.py"]
