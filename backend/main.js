@@ -1,9 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import router from './routes/reminders.js';
-import openDb from './db.js';
-
-await openDb();
+import db from './db.js';
 
 const app = express();
 

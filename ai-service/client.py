@@ -9,27 +9,41 @@ from langchain.chat_models import init_chat_model
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.prebuilt import create_react_agent
 
+from datetime import datetime
 import requests
 
 load_dotenv()
 
 @tool
+def get_current_time():
+    """
+    Retorna a data e hora atuais no formato YYYY-MM-DD HH:MM.
+    """
+    now = datetime.now()
+    return now.strftime('%Y-%m-%d %H:%M')
+
+@tool
 def add_reminder(title, location, time, date):
     """
-    Transforma uma mensagem normal em lembrete, extraindo automaticamente da linguagem natural os seguintes campos:
-        - O que precisa ser lembrado (título)
-        - Quando (data e hora)
-        - Onde (opcional)
+    Cria um lembrete a partir de uma mensagem em linguagem natural.
 
-    Exemplos de mensagens que funcionam:
-        - "Me lembre da consulta no dentista amanhã às 14h"
-        - "Reunião com o time na sala 3 às 10:30"
-        - "Preciso levar o carro pra lavar sexta-feira"
+    O sistema interpreta automaticamente:
+    - Título do lembrete (crie com base na mensagem)
+    - Data e hora, incluindo expressões relativas como 'amanhã', 'daqui 2 horas' ou 'hoje às 10h'
+    - Local (opcional)
 
-    Retorna o lembrete pronto para salvar ou mensagem de erro se não entender.
+    As datas são convertidas para o formato YYYY-MM-DD.
+    Os horários seguem o padrão HH:MM (24 horas).
 
-    Obs: Data/hora são convertidas para formato padrão (YYYY-MM-DD e HH:MM). 
+    Exemplos de mensagens válidas:
+    - "Me lembre da consulta no dentista amanhã às 14h"
+    - "Reunião com o time na sala 3 às 10:30"
+    - "Preciso levar o carro pra lavar sexta-feira"
+    - "Encontrar com Nicole daqui 2 horas"
+
+    Retorna uma confirmação de criação bem-sucedida ou uma mensagem de erro caso não seja possível processar a solicitação.
     """
     url = "http://localhost:3001/reminders"
     data = {
@@ -45,28 +59,35 @@ def add_reminder(title, location, time, date):
     except requests.exceptions.RequestException as e:
         return f"Error creating reminder: {str(e)}"
 
+@tool
+def get_reminders():
+    """
+    Lista todos os lembretes salvos.
+    """
+    url = "http://localhost:3001/reminders"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return f"Error fetching reminders: {str(e)}"
+
 class State(TypedDict):
     messages:Annotated[List[HumanMessage | AIMessage], add_messages]
 
 llm = init_chat_model("google_genai:gemini-2.0-flash")
-graph_builder = StateGraph(State)
+tools = [add_reminder, get_reminders, get_current_time]
 
-tool = add_reminder
-tools = [tool]
-llm_with_tools = llm.bind_tools(tools)
-
-def chatbot(state: State):
-    return {"messages": [llm_with_tools.invoke(state["messages"])]}
-
-graph_builder.add_node("chatbot", chatbot)
-
-tool_node = ToolNode(tools=[tool])
-graph_builder.add_node("tools", tool_node)
-
-graph_builder.add_conditional_edges(
-    "chatbot",
-    tools_condition,
+reminder_agent = create_react_agent(
+    model = llm,
+    tools = tools,
+    prompt = "Você é um assistente que ajuda a criar lembretes a partir de mensagens em linguagem natural.",
 )
-graph_builder.add_edge("tools", "chatbot")
-graph_builder.add_edge(START, "chatbot")
-graph = graph_builder.compile()
+
+workflow = StateGraph(State)
+
+workflow.add_node("reminder_agent", reminder_agent)
+
+workflow.add_edge(START, "reminder_agent")
+
+graph = workflow.compile()

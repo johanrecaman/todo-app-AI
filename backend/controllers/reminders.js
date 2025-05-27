@@ -1,35 +1,69 @@
-import openDb from '../db.js';
+import db from '../db.js';
 
-const db = await openDb();
-
-export const getReminders = async (_, res) =>{
-  const sql = 'SELECT * FROM reminders ORDER BY created_at DESC';
-  const reminders = await db.all(sql);
-  res.json(reminders);
+export const getReminders = async (_, res) => {
+  const sql = 'SELECT * FROM reminders';
+  db.all(sql, [], (err, reminders) => {
+    if (err){
+      return res.status(500).json({ error: 'Erro ao buscar lembretes' });
+    }
+    res.json(reminders);
+  });
 }
 
-export const getReminder = async (req, res) =>{
+export const getReminder = async (req, res) => {
   const sql = 'SELECT * FROM reminders WHERE id = ?';
-  const reminder = await db.get(sql, req.params.id);
-  res.json(reminder);
+  const params = [req.params.id];
+  db.get(sql, params, (err, reminder) => {
+    if (err) {
+      return res.status(500).json({ error: 'Erro ao buscar lembrete' });
+    }
+    if (!reminder) {
+      return res.status(404).json({ error: 'Lembrete não encontrado' });
+    }
+    res.json(reminder);
+  });
 }
 
-export const createReminder = async (req, res) =>{
+export const createReminder = async (req, res) => {
   const { title, location, date, time } = req.body;
   const sql = 'INSERT INTO reminders (title, location, date, time) VALUES (?, ?, ?, ?)';
   const params = [title, location, date, time];
-  await db.run(sql, params);
-  res.status(201).json({ message: 'Reminder created successfully' });
+  
+  db.run(sql, params, function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Erro ao criar lembrete' });
+    }
+    res.status(201).json({ id: this.lastID });
+  });
 }
 
-export const updateReminder = async (req, res) =>{
+export const updateReminder = async (req, res) => {
   const { title, location, date, time } = req.body;
   const sql = 'UPDATE reminders SET title = ?, location = ?, date = ?, time = ? WHERE id = ?';
   const params = [title, location, date, time, req.params.id];
-  await db.run(sql, params);
+  
+  db.run(sql, params, function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Erro ao atualizar lembrete' });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Lembrete não encontrado' });
+    }
+    res.json({ message: 'Lembrete atualizado com sucesso' });
+  });
 }
 
-export const deleteReminder = async (req, res) =>{
+export const deleteReminder = async (req, res) => {
   const sql = 'DELETE FROM reminders WHERE id = ?';
-  await db.run(sql, req.params.id);
+  const params = [req.params.id];
+
+  db.run(sql, params, function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Erro ao deletar lembrete' });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Lembrete não encontrado' });
+    }
+    res.json({ message: 'Lembrete deletado com sucesso' });
+  });
 }
