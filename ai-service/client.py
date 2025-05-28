@@ -19,13 +19,16 @@ import requests
 
 load_dotenv()
 
+
 @tool
 def get_current_time():
     """
     Retorna a data e hora atuais no formato YYYY-MM-DD HH:MM.
+    Quando o usuário utiliza datas em expressões relativas, como 'amanhã', 'daqui 2 horas', 'hoje às 10h', etc
     """
     now = datetime.now()
-    return now.strftime('%Y-%m-%d %H:%M')
+    return now.strftime("%Y-%m-%d %H:%M")
+
 
 @tool
 def add_reminder(title, location, time, date):
@@ -44,19 +47,15 @@ def add_reminder(title, location, time, date):
     - "Encontrar com Nicole daqui 2 horas"
     Retorna uma confirmação de criação bem-sucedida ou uma mensagem de erro caso não seja possível processar a solicitação.
     """
-    url = "http://localhost:3001/reminders"
-    data = {
-        "title": title,
-        "location": location,
-        "time": time,
-        "date": date
-    }
+    url = "http://backend:3001/reminders"
+    data = {"title": title, "location": location, "time": time, "date": date}
     try:
         response = requests.post(url, json=data, timeout=5)
         response.raise_for_status()
         return "Reminder successfully created!"
     except requests.exceptions.RequestException as e:
         return f"Error creating reminder: {str(e)}"
+
 
 @tool
 def get_reminders():
@@ -71,8 +70,10 @@ def get_reminders():
     except requests.exceptions.RequestException as e:
         return f"Error fetching reminders: {str(e)}"
 
+
 class State(TypedDict):
     messages: Annotated[List[HumanMessage | AIMessage], add_messages]
+
 
 llm = init_chat_model("google_genai:gemini-2.0-flash")
 tools = [add_reminder, get_reminders, get_current_time]
@@ -100,13 +101,14 @@ app.add_middleware(
 
 conversations = {}
 
+
 @app.post("/api/chat")
 async def chat(req: Request):
     """Endpoint principal para conversar com o assistente"""
     try:
         data = await req.json()
-        user_msg = data.get('message', '')
-        conversation_id = data.get('conversation_id', 'default')
+        user_msg = data.get("message", "")
+        conversation_id = data.get("conversation_id", "default")
 
         if conversation_id not in conversations:
             conversations[conversation_id] = []
@@ -118,14 +120,15 @@ async def chat(req: Request):
         assistant_msg = result["messages"][-1]
         conversations[conversation_id].append(assistant_msg)
 
-        return{
+        return {
             "success": True,
             "response": assistant_msg.content,
-            "conversation_id": conversation_id
+            "conversation_id": conversation_id,
         }
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error", str(e)})
+
 
 @app.get("/api/chat/history/{conversation_id}")
 async def get_history(conversation_id: str):
@@ -135,12 +138,15 @@ async def get_history(conversation_id: str):
 
     messages = []
     for msg in conversations[conversation_id]:
-        messages.append({
-            "type": "human" if isinstance(msg, HumanMessage) else "assistant",
-            "content": msg.content
-        })
+        messages.append(
+            {
+                "type": "human" if isinstance(msg, HumanMessage) else "assistant",
+                "content": msg.content,
+            }
+        )
 
-    return {"messages":messages}
+    return {"messages": messages}
+
 
 @app.delete("/api/chat/clear/{conversation_id}")
 async def clear_conversation(conversation_id: str):
@@ -149,12 +155,13 @@ async def clear_conversation(conversation_id: str):
         del conversations[conversation_id]
     return {"success": True}
 
+
 if __name__ == "__main__":
     import uvicorn
+
     print("🚀 Servidor iniciado em http://localhost:5050")
     print("📝 Endpoints disponíveis:")
     print("   POST /api/chat - Enviar mensagem")
     print("   GET /api/chat/history/<id> - Ver histórico")
     print("   DELETE /api/chat/clear/<id> - Limpar conversa")
     uvicorn.run(app, host="0.0.0.0", port=5050, reload=True)
-

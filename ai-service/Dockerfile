@@ -9,4 +9,4 @@ RUN pip install -U "langgraph-cli[inmem]"
 
 COPY . .
 
-CMD ["python", "client.py"]
+CMD ["uvicorn", "client:app", "--host", "0.0.0.0", "--port", "5050", "--reload"]

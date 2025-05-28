@@ -8,9 +8,11 @@ services:
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_URL=http://localhost:5050
     command: npm run dev -- --host
     depends_on:
       - backend
+      - ai-service
 
   backend:
     build: ./backend
