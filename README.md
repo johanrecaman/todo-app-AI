@@ -7,10 +7,6 @@ Built with React, Node.js, LangGraph, and SQLite. AI powered by Gemini.<br>
 </p>
 <p align="center">🚀 Currently in version V0.1</p>
 
-<img src="./lib/img/prints/home.png"/>
-<img src="./lib/img/prints/chat.png"/>
-<img src="./lib/img/prints/database.png"/>
-
 ---
 
 ## 🧠 About the Project
