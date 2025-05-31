@@ -54,8 +54,8 @@ docker-compose up --build
 
 This will start:
 - Frontend on: `http://localhost:5173`
-- Backend API on: `http://localhost:3000`
-- AI Service on: `http://localhost:8000`
+- Backend API on: `http://localhost:3001`
+- AI Service on: `http://localhost:5050`
   
 ---
 
@@ -91,7 +91,5 @@ Made with 🔥 by Johan Stromberg
 ## 💡 Future Improvements
 
 - ✅ Authentication
-- ✅ More AI capabilities
 - ✅ Improve UX/UI
-- ✅ Switch to a more robust database (PostgreSQL or MongoDB)
 - ✅ Deploy to the cloud
