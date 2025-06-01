@@ -16,6 +16,8 @@ The chatbot communicates with a backend API and a database to create, update, li
 
 The AI agent (built with LangGraph and Gemini) has tools to interact with the backend endpoints and handle database operations — making it capable of functioning as an autonomous task assistant.
 
+*Note: The frontend was AI-generated and serves as a functional interface to showcase the core AI agent. The main focus of this project is the autonomous AI agent built with LangGraph.*
+
 ---
 
 ## 🧰 Tools & Tech Stack
